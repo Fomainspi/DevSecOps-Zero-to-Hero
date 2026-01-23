@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  id-token: write     # REQUIRED for GitHub OIDC
+  id-token: write
   contents: read
 
 jobs:
@@ -14,21 +14,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
-      - name: Checkout source code
+      # 1. Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Install Vault CLI (official binary)
+      # 2. Install Vault CLI
       - name: Install Vault CLI
         run: |
           VAULT_VERSION=1.15.6
           curl -fsSL https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip -o vault.zip
           unzip -o vault.zip
-          sudo mv vault /usr/local/bin/
+          sudo mv vault /usr/local/bin/vault
           vault version
 
-      # 3. Authenticate to Vault using GitHub OIDC (JWT auth backend)
-      # OFFICIAL METHOD: vault write auth/jwt/login
+      # 3. Authenticate to Vault using JWT (OFFICIAL METHOD)
       - name: Authenticate to Vault
         env:
           VAULT_ADDR: http://98.82.141.249:8200
@@ -38,21 +37,21 @@ jobs:
             jwt=$ACTIONS_ID_TOKEN_REQUEST_TOKEN)
           echo "VAULT_TOKEN=$VAULT_TOKEN" >> $GITHUB_ENV
 
-      # 4. Read AWS credentials from Vault (KV v2)
-      - name: Read AWS credentials from Vault
+      # 4. Read AWS credentials from Vault
+      - name: Read AWS credentials
         env:
           VAULT_ADDR: http://98.82.141.249:8200
         run: |
           echo "TF_VAR_aws_access_key=$(vault kv get -field=access_key kv/aws)" >> $GITHUB_ENV
           echo "TF_VAR_aws_secret_key=$(vault kv get -field=secret_key kv/aws)" >> $GITHUB_ENV
 
-      # 5. Install Terraform (pinned version)
+      # 5. Install Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.14.4"
 
-      # 6. Terraform Init & Apply (terraform folder)
+      # 6. Terraform init & apply
       - name: Terraform Apply
         working-directory: terraform
         run: |
