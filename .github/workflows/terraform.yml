@@ -14,43 +14,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
-      - name: Checkout source code
+      # 1. Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Install Vault CLI (manual, reliable)
+      # 2. Install Vault CLI (manual, stable)
       - name: Install Vault CLI
         run: |
           VAULT_VERSION=1.15.6
           curl -fsSL https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip -o vault.zip
-          unzip vault.zip
+          unzip -o vault.zip
           sudo mv vault /usr/local/bin/
           vault version
 
-      # 3. Login to Vault using GitHub OIDC
+      # 3. Login to Vault using GitHub OIDC (EXPLICIT PATH)
       - name: Login to Vault
         env:
           VAULT_ADDR: http://98.82.141.249:8200
         run: |
-          vault login -method=jwt \
+          vault login \
+            -method=oidc \
+            -path=oidc \
             role=github-actions \
             jwt=$ACTIONS_ID_TOKEN_REQUEST_TOKEN
 
-      # 4. Read AWS credentials from Vault
-      - name: Read AWS credentials
+      # 4. Fetch AWS credentials from Vault
+      - name: Get AWS credentials from Vault
         env:
           VAULT_ADDR: http://98.82.141.249:8200
         run: |
           echo "TF_VAR_aws_access_key=$(vault kv get -field=access_key kv/aws)" >> $GITHUB_ENV
           echo "TF_VAR_aws_secret_key=$(vault kv get -field=secret_key kv/aws)" >> $GITHUB_ENV
 
-      # 5. Install Terraform (pinned)
+      # 5. Setup Terraform (pinned to latest)
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.14.4"
 
-      # 6. Terraform Init & Apply (terraform folder)
+      # 6. Terraform Init & Apply (inside terraform folder)
       - name: Terraform Apply
         working-directory: terraform
         run: |
