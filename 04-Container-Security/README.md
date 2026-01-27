@@ -252,12 +252,12 @@ Attackers have very little to work with.
 FROM node:25 AS builder
 
 WORKDIR /build
-COPY package*.json ./
-RUN npm ci
+COPY package.json ./
+RUN npm install
 COPY . .
 
 # -------- Runtime Stage --------
-FROM gcr.io/distroless/nodejs25-debian12
+FROM gcr.io/distroless/nodejs20-debian12
 
 WORKDIR /app
 COPY --from=builder /build/app.js ./app.js
