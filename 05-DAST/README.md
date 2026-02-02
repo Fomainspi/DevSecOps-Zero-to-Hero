@@ -372,7 +372,7 @@ No new language. Uses YAML.
 ## Install Kyverno
 
 ```
-kubectl create -f https://raw.githubusercontent.com/kyverno/kyverno/main/config/install.yaml
+kubectl apply --server-side -f https://github.com/kyverno/kyverno/releases/latest/download/install.yaml
 ```
 
 Verify:
@@ -553,8 +553,8 @@ Git stays clean. Secrets stay safe.
 ## Install External Secrets Operator
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/main/deploy/crds/bundle.yaml
-kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/main/deploy/manifests/external-secrets.yaml
+helm repo add external-secrets https://charts.external-secrets.io
+helm repo update
 ```
 
 Verify:
@@ -565,7 +565,7 @@ kubectl get pods -n external-secrets
 
 ---
 
-## Install Vault (Dev Mode – Learning Only)
+## Install Vault
 
 ```
 kubectl create namespace vault
@@ -613,10 +613,20 @@ kubectl port-forward -n vault deploy/vault 8200:8200
 In another terminal:
 
 ```
+kubectl exec -it -n vault deploy/vault -- sh
+
 export VAULT_ADDR=http://127.0.0.1:8200
 export VAULT_TOKEN=root
 
 vault kv put secret/payments/db username=admin password=SuperSecret123
+```
+
+Create Vault Token Secret
+
+```
+kubectl create secret generic vault-token \
+  --from-literal=token=root \
+  -n payments
 ```
 
 ---
@@ -625,7 +635,7 @@ vault kv put secret/payments/db username=admin password=SuperSecret123
 
 ```
 kubectl apply -f - <<EOF
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: SecretStore
 metadata:
   name: vault-backend
@@ -643,14 +653,6 @@ spec:
 EOF
 ```
 
-Create Vault token secret (this is the ONLY secret created manually):
-
-```
-kubectl create secret generic vault-token \
-  --from-literal=token=root \
-  -n payments
-```
-
 ---
 
 ## Create ExternalSecret (Git-Safe)
@@ -659,7 +661,7 @@ This is what goes into Git:
 
 ```
 kubectl apply -f - <<EOF
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: db-secret
@@ -714,4 +716,3 @@ kind delete cluster --name k8s-security
 ```
 ---
 
-**You now have a production-aligned Kubernetes security foundation.**
