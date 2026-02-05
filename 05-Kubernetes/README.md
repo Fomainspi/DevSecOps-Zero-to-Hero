@@ -15,7 +15,24 @@ docker --version
 kubectl version --client
 kind version
 ```
+If Kind is not installed,
+✅ Install kind (Linux)
+1- run
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
+2- Make it executable:
+chmod +x ./kind
+3- Move it into your PATH:
+sudo mv ./kind /usr/local/bin/kind
+4- Verify:
+kind version
 
+✅ Install kind (macOS)
+1- Using Homebrew:
+brew install kind
+
+2- Verify:
+
+kind version
 ---
 
 ## Cluster Setup (kind)
